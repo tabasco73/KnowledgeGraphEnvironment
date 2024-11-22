@@ -1,0 +1,12 @@
+graphviz
+numpy
+pandas
+langchain
+langchain_core
+langchain_ollama
+tiktoken
+python-dotenv
+pydantic
+pygraphviz
+openai
+pathspec
