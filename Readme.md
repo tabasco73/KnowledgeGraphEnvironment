@@ -17,8 +17,8 @@ Project to easily create knowledge graphs manually or based on pydantic schems.
 
 ## Features
 
-- Knowledge Graph Compiler based on pydantic schemas
-- Knowledge Graph Compiler based on standard format for nodes and relationships
+- Knowledge Graph Compiler based on pydantic schemas (Only different forms of aggregation)
+- Knowledge Graph Compiler based on standard format for nodes and relationships (Inheritance and context-relation)
 
 ## Installation
 
