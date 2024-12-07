@@ -1,7 +1,5 @@
 # KnowledgeGraphEnvironment
 
-
-
 ## Table of Contents
 
 1. [Introduction](#introduction)
@@ -36,7 +34,6 @@ Project to easily create knowledge graphs manually or based on pydantic schems.
     ```
 
 ## Usage
-
 
 To manually create knowledge graphs, create a file like domains/manual/opt.py and replace with your data. Then adjust the path in main.py and run:
     ```

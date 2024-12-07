@@ -1,0 +1,1161 @@
+# Project Overview: KnowledgeGraphEnvironment
+
+This document provides an overview of the project's directory structure and content.
+The directory tree is listed first, followed by the contents of each file, up to specified limits.
+
+---
+
+## Directory Tree:
+
+├── domains
+    ├── manual
+        └── label_opt.py
+        └── opt.py
+    ├── pydantic
+├── utility
+    ├── graph_creation
+        └── models.py
+        └── utility.py
+        └── graph_modules.py
+        └── generate_cat_edges.py
+        └── example_data.py
+        └── graph_labeled.py
+        └── test_edge_form.py
+
+---
+
+## File Contents:
+
+
+#### File: `manual/label_opt.py`
+```
+from utility.graph_creation.graph_modules import create_graph, transform_clusters, transform_edges, transform_nodes
+from utility.graph_creation.models import validate_graph
+
+arrow_tails = ['normal', 'odiamond', 'diamond', 'box']
+colors = ['black', 'red', 'blue', 'green', 'yellow', 'purple', 'lightblue']
+dirs = ['back', 'both']
+
+def get_ocpi_nodes():
+    return [
+        {
+            'name': 'Problem',
+            'color': 'lightgreen',
+            'shape': 'box',
+            'nodes': [
+                (3, "Optimization Problem"),
+                (4, "(LP) Linear Programming Problem"),
+                (17, "Optimization Problem; dual problem exists"),
+                (18, "Dual Problem"),
+                (40, "(TP) Transportation Problem"),
+            ]
+        },
+        {
+            'name': 'Methods',
+            'color': 'lightblue',
+            'shape': 'oval',
+            'nodes': [
+                (1, "Optimization Algorithm"),
+                (2, "Simplex Method"),
+                (19, "Algorithm"),
+                (20, "Method"),
+                (21, "Decision Rule"),
+                (22, "Pivot-Based Algorithm"),
+                (23, "Pivot Rule"),
+                (24, "Dantzig's Rule"),
+            ]
+        },
+        {
+            'name': 'Function',
+            'color': 'gray',
+            'shape': 'house',
+            'nodes': [
+                (5, "Function"),
+                (6, "Objective Function"),
+                (7, "Linear Objective Function"),
+            ]
+        },
+        {
+            'name': 'Aggregation',
+            'color': 'blue',
+            'shape': 'diamond',
+            'nodes': [
+                (25, "Tensor"),
+                (26, "Matrix"),
+                (27, "Vector"),
+                (28, "Constraint Matrix (A)"),
+                (29, "Vector of decision variables (vec{x})"),
+                (30, "Aggregation"),
+                (31, "Set"),
+                (32, "Basis of column space of Matrix"),
+                (33, "Basis of column space of Constraint Matrix"),
+                (34, "Vector in basis of column space of Constraint Matrix"),
+                (35, "Basic Variable"),
+                (36, "Solution to Optimization Problem"),
+                (37, "Basic Solution"),
+                (38, "Feasible Solution"),
+                (39, "Basic Feasible Solution"),
+                (41, "Initial Basic Feasible Solution"),
+            ]
+        },
+        {
+            'name': 'Variable',
+            'color': 'orange',
+            'shape': 'circle',
+            'nodes': [
+                (10, "Variable"),
+                (11, "Auxiliary Variable"),
+                (16, "Slack Variable"),
+            ]
+        },
+        {
+            'name': 'Condition',
+            'color': 'purple',
+            'shape': 'parallelogram',
+            'nodes': [
+                (8, "Equation"),
+                (9, "Linear Equation"),
+                (12, "Condition"),
+                (13, "Constraint"),
+                (14, "Linear Constraint"),
+                (15, "LP constraint"),
+            ]
+        }
+    ]
+
+def get_edges():
+    # Convert the original tuple format to the dictionary format with explicit 'id_from' and 'ids_to'
+    return [
+        {
+            'color': 'black',
+            'connections': [
+                {'id_from': 19, 'ids_to': [{'id': 1, 'label': 'uses'}]},
+                {'id_from': 20, 'ids_to': [{'id': 19, 'label': 'defines'}, {'id': 21, 'label': 'includes'}]},
+                {'id_from': 1,  'ids_to': [{'id': 2, 'label': 'implements'}]},
+                {'id_from': 3,  'ids_to': [{'id': 17, 'label': 'has'}, {'id': 18, 'label': 'has'}]},
+                {'id_from': 17, 'ids_to': [{'id': 4, 'label': 'is dual to'}]},
+                {'id_from': 5,  'ids_to': [{'id': 6, 'label': 'defines'}]},
+                {'id_from': 6,  'ids_to': [{'id': 7, 'label': 'is'}]},
+                {'id_from': 8,  'ids_to': [{'id': 9, 'label': 'is a'}]},
+                {'id_from': 9,  'ids_to': [{'id': 7, 'label': 'relates to'}]},
+                {'id_from': 10, 'ids_to': [{'id': 11, 'label': 'is'}]},
+                {'id_from': 11, 'ids_to': [{'id': 16, 'label': 'is'}]},
+                {'id_from': 12, 'ids_to': [{'id': 8, 'label': 'includes'}, {'id': 13, 'label': 'includes'}]},
+                {'id_from': 13, 'ids_to': [{'id': 14, 'label': 'is'}]},
+                {'id_from': 14, 'ids_to': [{'id': 15, 'label': 'is'}]},
+                {'id_from': 15, 'ids_to': [{'id': 16, 'label': 'relates to'}]},
+                {'id_from': 19, 'ids_to': [{'id': 22, 'label': 'uses'}]},
+                {'id_from': 22, 'ids_to': [{'id': 2, 'label': 'implements'}]},
+                {'id_from': 21, 'ids_to': [{'id': 23, 'label': 'defines'}]},
+                {'id_from': 23, 'ids_to': [{'id': 24, 'label': 'implements'}]},
+                {'id_from': 25, 'ids_to': [{'id': 26, 'label': 'is a'}, {'id': 27, 'label': 'is a'}]},
+                {'id_from': 26, 'ids_to': [{'id': 28, 'label': 'defines'}]},
+                {'id_from': 27, 'ids_to': [{'id': 29, 'label': 'defines'}, {'id': 34, 'label': 'includes'}]},
+                {'id_from': 30, 'ids_to': [{'id': 31, 'label': 'includes'}, {'id': 25, 'label': 'includes'}, {'id': 36, 'label': 'leads to'}]},
+                {'id_from': 31, 'ids_to': [{'id': 32, 'label': 'defines'}]},
+                {'id_from': 32, 'ids_to': [{'id': 33, 'label': 'defines'}]},
+                {'id_from': 36, 'ids_to': [{'id': 37, 'label': 'results in'}, {'id': 38, 'label': 'results in'}]},
+                {'id_from': 37, 'ids_to': [{'id': 39, 'label': 'is a'}]},
+                {'id_from': 38, 'ids_to': [{'id': 39, 'label': 'is a'}]},
+                {'id_from': 4,  'ids_to': [{'id': 40, 'label': 'leads to'}]},
+                {'id_from': 39, 'ids_to': [{'id': 41, 'label': 'leads to'}]},
+            ],
+            'arrowhead': 'normal'
+        },
+        {
+            'color': 'black',
+            'connections': [
+                {'id_from': 4,  'ids_to': [{'id': 15, 'label': 'relates to'}, {'id': 7, 'label': 'involves'}]},
+                {'id_from': 17, 'ids_to': [{'id': 18, 'label': 'is part of'}]},
+                {'id_from': 23, 'ids_to': [{'id': 22, 'label': 'depends on'}]},
+                {'id_from': 15, 'ids_to': [{'id': 28, 'label': 'uses'}, {'id': 29, 'label': 'uses'}]},
+                {'id_from': 33, 'ids_to': [{'id': 28, 'label': 'relates to'}]},
+                {'id_from': 35, 'ids_to': [{'id': 34, 'label': 'relates to'}]},
+                {'id_from': 34, 'ids_to': [{'id': 33, 'label': 'relates to'}]},
+                {'id_from': 36, 'ids_to': [{'id': 3, 'label': 'is solution for'}]}
+            ],
+            'arrowhead': 'diamond'
+        }
+    ]
+
+def get_clusters():
+    return [
+        {
+            'name': 'namn1',
+            'color': 'lightgray',
+            'nodes': []
+        },
+        {
+            'name': 'namn2',
+            'color': 'blue',
+            'nodes': []
+        },
+    ]
+
+def main_labeled_opt():
+    nodes = get_ocpi_nodes()
+    edges = get_edges()
+    clusters = get_clusters()
+    filename = 'docs/labeled_opt_graph'
+
+    # Prepare data for validation and transformation
+    data = {
+        "nodes": nodes,
+        "edges": edges,
+        "clusters": clusters
+    }
+
+    # Validate the graph structure
+    #validate_graph(data)
+    # Apply the same transformations as in opt.py
+    transform_nodes(nodes)
+    transform_edges(edges)
+    transform_clusters(clusters)
+    # Create the graph
+    create_graph(nodes, edges, clusters, filename)
+
+if __name__ == '__main__':
+    main_labeled_opt()
+```
+
+#### File: `manual/opt.py`
+```
+from utility.graph_creation.graph_modules import create_graph, transform_clusters, transform_edges, transform_nodes
+from utility.graph_creation.models import validate_graph
+
+arrow_tails = ['normal', 'odiamond', 'diamond', 'box']
+colors = [ 'black', 'red', 'blue', 'green', 'yellow', 'purple', 'lightblue']
+dirs = ['back', 'both']
+
+def get_ocpi_nodes():
+    return [{
+        'name': 'Problem',
+        'color': 'lightgreen',
+        'shape': 'box',
+        'nodes': [
+            (3, "Optimization Problem"),
+            (4, "(LP) Linear Programming Problem"),
+            (17, "Optimization Problem; dual problem exists"),
+            (18, "Dual Problem"),
+            (40, "(TP) Transportation Problem"),
+            ]
+        },
+        {
+        'name': 'Methods',
+        'color': 'lightblue',
+        'shape': 'oval',
+        'nodes': [
+            (1, "Optimization Algorithm"),
+            (2, "Simplex Method"),
+            (19, "Algorithm"),
+            (20, "Method"),
+            (21, "Decision Rule"),
+            (22, "Pivot-Based Algorithm"),
+            (23, "Pivot Rule"),
+            (24, "Dantzig's Rule"),
+
+            ]
+        },
+        {
+            'name': 'Function',
+            'color': 'gray',
+            'shape': 'house',
+            'nodes': [
+                (5, "Function"),
+                (6, "Objective Function"),
+                (7, "Linear Objective Function"),
+
+                ]
+
+        },
+        {
+            'name': 'Aggregation',
+            'color': 'blue',
+            'shape': 'diamond',
+            'nodes': [
+                (25, "Tensor"),
+                (26, "Matrix"),
+                (27, "Vector"),
+                (28, "Constraint Matrix (A)"),
+                (29, "Vector of decision variables (vec{x})"),
+                (30, "Aggregation"),
+                (31, "Set"),
+                (32, "Basis of column space of Matrix"),
+                (33, "Basis of column space of Constraint Matrix"),
+                (34, "Vector in basis of column space of Constraint Matrix"),
+                (35, "Basic Variable"),
+                (36, "Solution to Optimization Problem"),
+                (37, "Basic Solution"),
+                (38, "Feasible Solution"),
+                (39, "Basic Feasible Solution"),
+                (41, "Initial Basic Feasible Solution"),
+
+
+                
+            ]
+        },
+        {
+            'name': 'Variable',
+            'color': 'orange',
+            'shape': 'circle',
+            'nodes': [
+                (10, "Variable"),
+                (11, "Auxiliary Variable"),
+                (16, "Slack Variable"),
+            ]
+        },
+        {
+            'name': 'Condition',
+            'color': 'purple',
+            'shape': 'parallelogram',
+            'nodes': [
+                (8, "Equation"),
+                (9, "Linear Equation"),
+                (12, "Condition"),
+                (13, "Constraint"),
+                (14, "Linear Constraint"),
+                (15, "LP constraint"),
+
+            ]
+        }
+
+            
+    ]
+
+def get_edges():
+    return [
+        {
+            'color':
+                'black',
+            'connections': [
+                (19, [1]),
+                (20, [19, 21]),
+                (1, [2]),
+                (3, [17, 18]),
+                (17, [4]),
+                (5, [6]),
+                (6, [7]),
+                (8, [9]),
+                (9, [7]),
+                (10, [11]),
+                (11, [16]),
+                (12, [8,13]),
+                (13, [14]),
+                (14, [15]),
+                (15, [16]),
+                (19, [22]),
+                (22, [2]),
+                (21, [23]),
+                (23, [24]),
+                (25, [26, 27]),
+                (26, [28]),
+                (27, [29]),
+                (30, [31, 25, 36]),
+                (31, [32]),
+                (32, [33]),
+                (27, [34]),
+                (36, [37, 38]),
+                (37, [39]),
+                (38, [39]),
+                (4, [40]),
+                (39, [41]),
+                
+                
+
+                ],
+            'arrowhead': 'normal'
+
+        },
+        {
+            'color':
+                'black',
+            'connections': [
+                (4, [15, 7]),
+                (17, [18]),
+                (23, [22]),
+                (15, [28, 29]),
+                (33, [28]),
+                (35, [34]),
+                (34, [33]),
+                (36, [3])
+                ],
+            'arrowhead': 'diamond'
+        }
+    ]
+
+# I use this to represent subtypes that together make up all options of a type
+def get_clusters():
+    return [
+        {
+            'name': 'namn1',
+            'color': 'lightgray',
+            'nodes': []
+        },
+        {
+            'name': 'namn2',
+            'color': 'blue',
+            'nodes': []
+        },
+    ]
+
+def main_opt():
+    nodes = get_ocpi_nodes()
+    edges = get_edges()
+    cluster = get_clusters()
+    filename = 'docs/opt_graph'
+    data = {
+        "nodes": nodes,
+        "edges": edges,
+        "clusters": [cluster]
+    }
+    
+    # Perform validation
+    validate_graph(data)
+    create_graph(nodes, edges, cluster, filename)
+
+if __name__ =='__main__':
+    main_opt()```
+
+#### File: `graph_creation/models.py`
+```
+# models.py
+
+from typing import List, Optional
+from pydantic import BaseModel, Field, field_validator
+from enum import Enum
+
+# Define Enums for constrained fields
+class ArrowHead(str, Enum):
+    normal = 'normal'
+    odiamond = 'odiamond'
+    diamond = 'diamond'
+    box = 'box'
+
+class Color(str, Enum):
+    black = 'black'
+    red = 'red'
+    blue = 'blue'
+    green = 'green'
+    yellow = 'yellow'
+    purple = 'purple'
+    lightblue = 'lightblue'
+    lightgreen = 'lightgreen'
+    gray = 'gray'
+    lightgray = 'lightgray'
+    lightyellow = 'lightyellow'
+    orange = 'orange'
+    pink = 'pink'
+
+class Shape(str, Enum):
+    box = 'box'
+    oval = 'oval'
+    house = 'house'
+    diamond = 'diamond'
+    circle = 'circle'
+    parallelogram = 'parallelogram'
+
+# Model for individual nodes within a cluster
+class Node(BaseModel):
+    id: int
+    label: str
+
+    @field_validator('label')
+    def label_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Label must not be empty')
+        return v
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "label": "Model"
+            }
+        }
+
+# Model for node clusters
+class NodeCluster(BaseModel):
+    name: str
+    color: Color
+    shape: Shape
+    nodes: List[Node]
+
+    @field_validator('nodes', mode='before')
+    def validate_nodes(cls, v):
+        if isinstance(v, list):
+            transformed_nodes = []
+            for idx, node_tuple in enumerate(v):
+                if not isinstance(node_tuple, (list, tuple)) or len(node_tuple) != 2:
+                    raise ValueError(f'Each node must be a tuple of (int, str), error at index {idx}')
+                transformed_nodes.append({'id': node_tuple[0], 'label': node_tuple[1]})
+            return transformed_nodes
+        raise TypeError('nodes must be a list of tuples (int, str)')
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "name": "Models",
+                "color": "lightgreen",
+                "shape": "box",
+                "nodes": [
+                    {
+                        "id": 1,
+                        "label": "Model"
+                    },
+                    {
+                        "id": 2,
+                        "label": "(DGM) Directed Graphical Model"
+                    }
+                    # ... other nodes
+                ]
+            }
+        }
+
+# Model for connections within edges
+class Connection(BaseModel):
+    source: int
+    targets: List[int]
+
+    @field_validator('targets')
+    def targets_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('Targets list must not be empty')
+        return v
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "source": 1,
+                "targets": [9]
+            }
+        }
+
+# Model for edges
+class Edge(BaseModel):
+    color: Color
+    connections: List[Connection]
+    arrowhead: ArrowHead
+
+    @field_validator('connections', mode='before')
+    def validate_connections(cls, v):
+        if isinstance(v, list):
+            transformed_connections = []
+            for idx, conn_tuple in enumerate(v):
+                if not isinstance(conn_tuple, (list, tuple)) or len(conn_tuple) != 2:
+                    raise ValueError(f'Each connection must be a tuple of (int, List[int]), error at index {idx}')
+                transformed_connections.append({'source': conn_tuple[0], 'targets': conn_tuple[1]})
+            return transformed_connections
+        raise TypeError('connections must be a list of tuples (int, List[int])')
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "color": "black",
+                "connections": [
+                    {
+                        "source": 1,
+                        "targets": [9]
+                    },
+                    {
+                        "source": 9,
+                        "targets": [2, 63]
+                    }
+                    # ... other connections
+                ],
+                "arrowhead": "normal"
+            }
+        }
+
+# Model for additional clusters in 'need_to_implement'
+class AdditionalCluster(BaseModel):
+    name: str
+    color: Color
+    nodes: Optional[List[int]] = []
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "name": "Datalänklagret",
+                "color": "lightgray",
+                "nodes": []
+            }
+        }
+
+# Overall Graph Model
+class GraphModel(BaseModel):
+    nodes: List[NodeCluster]
+    edges: List[Edge]
+    clusters: List[AdditionalCluster]
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "nodes": [
+                    # Example node clusters
+                ],
+                "edges": [
+                    # Example edges
+                ],
+                "clusters": [
+                    # Example additional clusters
+                ]
+            }
+        }
+
+def validate_graph(data: dict):
+    try:
+        graph = GraphModel(**data)
+        print("Validation successful!")
+        return graph
+    except Exception as e:
+        print(f"Validation error: {e}")
+        raise```
+
+#### File: `graph_creation/utility.py`
+```
+from utility.graph_creation.example_data import categories, edges, clusters
+
+def transform_list(input_list):
+    output_list = []
+    for item in input_list:
+        transformed_item = {
+            'name': item['name'],
+            'color': item['color'],
+            'shape': item['shape'],
+            'nodes': [(node['id'], node['name']) for node in item['nodes']]
+        }
+        output_list.append(transformed_item)
+    return output_list
+
+def transform_connections(input_list):
+    output_list = []
+    for item in input_list:
+        transformed_item = {
+            'color': item['color'],
+            'connections': [(conn['id_from'], conn['ids_to']) for conn in item['connections']],
+            'arrowhead': item['arrowhead']
+        }
+        output_list.append(transformed_item)
+    return output_list
+
+if __name__ == '__main__':
+    print(transform_connections(edges))```
+
+#### File: `graph_creation/graph_modules.py`
+```
+from graphviz import Digraph
+
+def help_fill(id_, name):
+    return {"Id":f"{str(id_)}", "Info": f'ID:{id_} - {name}'}
+
+def node_filler(list_id_names):
+    nodes = []
+    for id_, name in list_id_names:
+        nodes.append(help_fill(id_, name))
+    return nodes
+
+def spread_edges(list1):
+    spread = [(a, b) for a, b_s in list1 for b in b_s ]
+    print(f'{spread=}')
+    return spread
+
+def node_add(dot, node_list, color_choice, fill_color,cluster_ids, **kwargs):
+    clusters = {}
+    for node in node_list:
+        node_id = str(node["Id"])
+
+        if node_id in cluster_ids:
+            cluster_info = cluster_ids[node_id]
+            cluster_name = 'cluster_' + cluster_info['name']
+            cluster_color = cluster_info['color']
+
+            if cluster_name not in clusters:
+                clusters[cluster_name] = Digraph(name=cluster_name)
+                clusters[cluster_name].attr(style='filled', color=cluster_color)
+                
+            clusters[cluster_name].node(node_id, label=node["Info"], color=color_choice, fillcolor=fill_color, **kwargs)
+        else:
+            dot.node(node_id, label=node["Info"], color=color_choice, fillcolor=fill_color, **kwargs)
+
+    for cluster in clusters.values():
+        dot.subgraph(cluster)
+
+    return dot
+
+def edge_add(dot, edges, nodes, color_choice, arrowhead):
+    nodes = [int(node["Id"]) for node in nodes]
+    for start, end in edges:
+        #print(nodes)
+        if start in nodes and end in nodes:
+            #print(start in nodes)
+            #print(f'{kwargs=}')
+            print(f'{arrowhead}')
+            dot.edge(str(start), str(end), color=color_choice, dir = 'back', arrowtail = arrowhead)
+    return dot
+
+def create_graph(nodes, edges, cluster_info = {}, filename = 'graph'):
+    if cluster_info != {}:
+        cluster_ids_ = transform_clusters(cluster_info)
+    else:
+        cluster_ids_ = {}
+    nodes = transform_nodes(nodes)
+    edges = transform_edges(edges)
+    all_nodes = [node for node_set in nodes for node in node_set['nodes']]
+    dot = Digraph(filename=filename, comment = 'Graphviz Diagram')
+    for node_set_obj in nodes:
+        dot = node_add(dot, node_set_obj['nodes'], node_set_obj['color'], node_set_obj['color'],cluster_ids_, style = 'filled', shape = node_set_obj['shape'])
+    for edge_set_obj in edges:
+        dot = edge_add(dot, edge_set_obj['edges'], all_nodes, edge_set_obj['color'], arrowhead = edge_set_obj['arrowhead'])
+    dot.view()
+
+def transform_nodes(nodes):
+    return [
+        {
+            'name': node_obj['name'],
+            'color': node_obj['color'],
+            'shape': node_obj['shape'],
+            'nodes': node_filler(node_obj['nodes'])
+        } for node_obj in nodes
+    ]
+
+def transform_edges(edges):
+    return [
+        {
+            'color': edge_obj['color'],
+            'edges': spread_edges(edge_obj['connections']),
+            'arrowhead': edge_obj['arrowhead']
+        } for edge_obj in edges
+    ]
+
+def transform_clusters(cluster_info):
+    cluster_ids_ = {str(a):{'name':cluster_info[0]['name'], 'color': cluster_info[0]['color']} for a in cluster_info[0]['nodes']}
+    for iter, b in enumerate(cluster_info):
+        if iter == 0:
+            continue
+        cluster_ids_.update({str(a): {'name':cluster_info[iter]['name'], 'color': cluster_info[iter]['color']} for a in cluster_info[iter]['nodes']})
+    return cluster_ids_```
+
+#### File: `graph_creation/generate_cat_edges.py`
+```
+from pydantic import BaseModel, Field # type: ignore
+from typing import List, Type, Union, Optional, get_type_hints
+from enum import Enum
+import pygraphviz as pgv # type: ignore
+import inspect
+from domains.pydantic.parkit_imports import classes_list
+
+# Define styles for different relationship types
+RELATIONSHIP_STYLES = {
+    'attribute': {'color': 'brown', 'style': 'solid'},
+    'list_attribute': {'color': 'blue', 'style': 'dashed'},
+    'optional_attribute': {'color': 'green', 'style': 'dotted'},
+    'optional_list_attribute': {'color': 'purple', 'style': 'dashed'}
+}
+
+# Define a mapping from keyword to color
+KEYWORD_COLOR_MAP = {
+    'session': 'orange',
+    'cdr': 'blue',
+    'command': 'pink',
+    'version': 'brown',
+    'credential': 'green',
+    'location': 'purple',
+    'tokens': 'yellow',
+
+}
+
+def create_graph_from_classes(classes: List[Type[Union[BaseModel, Enum]]], output_filename: str = 'pydantic_graph.png', layout_prog: str = 'dot'):
+    graph = pgv.AGraph(strict=False, directed=True)
+    edge_set = set()
+    for model in classes:
+        create_graph_from_pydantic(model, graph, edge_set)
+    categories = generate_categories(graph)
+    edges = generate_edges(graph, categories)
+    
+    # Output the graph
+    graph.layout(prog=layout_prog)
+    graph.draw(output_filename)
+    print(f"Number of nodes: {len(graph.nodes())}, {len(categories)}")
+    print(f"Number of edges: {len(graph.edges())}, {len(edges)}")
+    return categories, edges
+
+def create_graph_from_pydantic(model: Type[Union[BaseModel, Enum]], graph=None, edge_set=None):
+    model_name = model.__name__.lower()  # Use lowercase for consistent matching
+    # Check for HTTP method keywords and determine color based on additional keywords
+    node_color = None
+    if any(action in model_name for action in ["get", "put", "patch", "post"]):
+        for keyword, color in KEYWORD_COLOR_MAP.items():
+            if keyword in model_name:
+                node_color = color
+                print(f"Node '{model.__name__}' contains HTTP method and '{keyword}', and will be colored {color}.")
+                break
+    if not node_color:
+        # Default colors if no specific keyword is matched
+        node_color = "lightyellow" if issubclass(model, BaseModel) else "lightgrey"
+        node_pen_color = "lightblue" if issubclass(model, BaseModel) else "red"
+    else:
+        node_pen_color = node_color
+    # Distinguish nodes based on type
+    if issubclass(model, BaseModel):
+        graph.add_node(model.__name__, shape="ellipse", style="filled", fillcolor=node_color, color=node_pen_color, penwidth=2)
+    elif issubclass(model, Enum):
+        graph.add_node(model.__name__, shape="box", style="filled", fillcolor=node_color, color=node_pen_color, penwidth=2)
+    if issubclass(model, BaseModel):
+        for name, field in model.__annotations__.items():
+            field_type = get_type_hints(model)[name]
+            types_to_handle = []
+            if hasattr(field_type, "__origin__"):
+                if field_type.__origin__ in {Union, Optional}:
+                    for sub_type in field_type.__args__:
+                        if hasattr(sub_type, "__origin__") and sub_type.__origin__ == list:
+                            types_to_handle.append((sub_type.__args__[0], 'optional_list_attribute'))
+                        else:
+                            types_to_handle.append((sub_type, 'optional_attribute'))
+                elif field_type.__origin__ == list:
+                    types_to_handle.append((field_type.__args__[0], 'list_attribute'))
+            else:
+                types_to_handle.append((field_type, 'attribute'))
+            for sub_type, relationship_type in types_to_handle:
+                if inspect.isclass(sub_type):
+                    handle_field_type(sub_type, model.__name__, graph, edge_set, relationship_type)
+    return graph
+
+def handle_field_type(field_type, model_name, graph, edge_set, relationship_type):
+    """Handles the creation of edges and nodes for a given field type."""
+    if issubclass(field_type, BaseModel):
+        if not graph.has_node(field_type.__name__):
+            graph.add_node(field_type.__name__, shape="ellipse", style="filled", fillcolor="lightyellow", color="lightyellow", penwidth=2)
+        if (model_name, field_type.__name__) not in edge_set:
+            graph.add_edge(model_name, field_type.__name__, **RELATIONSHIP_STYLES[relationship_type])
+            edge_set.add((model_name, field_type.__name__))
+        create_graph_from_pydantic(field_type, graph, edge_set)
+    elif issubclass(field_type, Enum):
+        if not graph.has_node(field_type.__name__):
+            graph.add_node(model_name, shape="box", style="filled", fillcolor="lightblue", color="lightblue", penwidth=2)
+        if (model_name, field_type.__name__) not in edge_set:
+            graph.add_edge(model_name, field_type.__name__, **RELATIONSHIP_STYLES[relationship_type])
+            edge_set.add((model_name, field_type.__name__))
+
+def generate_categories(graph):
+    """Generates the categories structure from the graph."""
+    categories = []
+    node_id = 0 
+    for node in graph.nodes():
+        node_data = {
+            'name': node,
+            'color': graph.get_node(node).attr.get('color', 'lightblue') or 'lightblue',
+            'shape': graph.get_node(node).attr.get('shape', 'ellipse') or 'ellipse',
+            'nodes': [{'id': node_id, 'name': node}]
+        }
+        categories.append(node_data)
+        node_id += 1
+    return categories
+
+def generate_edges(graph, categories):
+    """Generates the edges structure from the graph."""
+    edges = []
+    for edge in graph.edges():
+        u, v = edge
+        u_id = next((category['nodes'][0]['id'] for category in categories if category['name'] == u), None)
+        v_id = next((category['nodes'][0]['id'] for category in categories if category['name'] == v), None)
+
+        if u_id is not None and v_id is not None:
+            connection_data = {
+                'color': graph.get_edge(u, v).attr.get('color', 'orange') or 'orange',
+                'arrowhead': graph.get_edge(u, v).attr.get('arrowhead', 'normal') or 'normal',
+                'connections': [{
+                    'id_from': u_id,
+                    'ids_to': [v_id]
+                }]  # Store the connection as a dictionary
+            }
+            edges.append(connection_data)
+    return edges
+
+if __name__ == '__main__':
+    categories, edges = create_graph_from_classes(classes_list, output_filename='pydantic_graph_test_dot.png', layout_prog='dot')
+    # You can now run the tests using the generated categories and edges
+    print(f'{categories=}')
+    print(f'{edges=}')
+    print(f'{len(categories)=}')
+    print(f'{len(edges)=}')
+```
+
+#### File: `graph_creation/example_data.py`
+```
+# List of categories with associated nodes
+categories = [
+    {
+        'name': 'Locations',         
+        'color': 'lightblue',       
+        'shape': 'ellipse',       
+        'nodes': [                      
+            {'id': 1, 'name': 'Location'},  
+            {'id': 2, 'name': 'EVSE'},  
+            {'id': 3, 'name': 'Connector'},  
+        ]
+    },
+    {
+        'name': 'Interfaces',         
+        'color': 'lightgreen',       
+        'shape': 'box',       
+        'nodes': [                      
+            {'id': 4, 'name': 'Sender Interface'},  
+            {'id': 5, 'name': 'Receiver Interface'},  
+        ]
+    },
+    {
+        'name': 'Methods',         
+        'color': 'lightcoral',       
+        'shape': 'box',       
+        'nodes': [                      
+            {'id': 6, 'name': 'GET'},  
+            {'id': 7, 'name': 'PUT'},  
+            {'id': 8, 'name': 'PATCH'},  
+        ]
+    },
+]
+
+# List of edges connecting nodes, create different objects for different edge types.
+edges = [
+    {
+        'color': 'black',            
+        'connections': [                     
+            {'id_from': 1, 'ids_to': [2]},   
+            {'id_from': 2, 'ids_to': [3]},   
+        ],
+        'arrowhead': 'normal',    
+    },
+    {
+        'color': 'blue',            
+        'connections': [                     
+            {'id_from': 4, 'ids_to': [1, 2, 3]},   
+            {'id_from': 5, 'ids_to': [1, 2, 3]},   
+        ],
+        'arrowhead': 'vee',    
+    },
+    {
+        'color': 'red',            
+        'connections': [                     
+            {'id_from': 6, 'ids_to': [1, 2, 3]},   
+            {'id_from': 7, 'ids_to': [1, 2, 3]},   
+            {'id_from': 8, 'ids_to': [1, 2, 3]},   
+        ],
+        'arrowhead': 'vee',    
+    },
+]
+
+# List of clusters with associated nodes
+clusters = [
+    {
+        'name': 'LocationCluster',           
+        'color': 'lightgrey',        
+        'nodes': [1, 2, 3],        
+    },
+    {
+        'name': 'InterfaceCluster',           
+        'color': 'lightyellow',        
+        'nodes': [4, 5],        
+    },
+    {
+        'name': 'MethodCluster',           
+        'color': 'lightpink',        
+        'nodes': [6, 7, 8],        
+    },
+]
+
+categories = [
+        {
+            'name': 'Tariff Components',
+            'color': 'lightblue',
+            'shape': 'ellipse',
+            'nodes': [
+                {'id': 1, 'name': 'Tariff'},
+                {'id': 2, 'name': 'TariffElement'},
+                {'id': 3, 'name': 'PriceComponent'},
+            ]
+        },
+        {
+            'name': 'Enums',
+            'color': 'lightgreen',
+            'shape': 'box',
+            'nodes': [
+                {'id': 4, 'name': 'TariffType'},
+                {'id': 5, 'name': 'TariffDimensionType'},
+                {'id': 6, 'name': 'ReservationRestrictionType'},
+                {'id': 7, 'name': 'DayOfWeek'},
+            ]
+        },
+        {
+            'name': 'Restrictions',
+            'color': 'lightcoral',
+            'shape': 'box',
+            'nodes': [
+                {'id': 8, 'name': 'TariffRestrictions'},
+            ]
+        },
+    ]
+
+edges = [
+    {
+        'color': 'black',
+        'connections': [
+            {'id_from': 1, 'ids_to': [2]},   # Tariff -> TariffElement
+            {'id_from': 2, 'ids_to': [3]},   # TariffElement -> PriceComponent
+        ],
+        'arrowhead': 'normal',
+    },
+    {
+        'color': 'blue',
+        'connections': [
+            {'id_from': 3, 'ids_to': [5]},   # PriceComponent -> TariffDimensionType (Enum)
+            {'id_from': 2, 'ids_to': [6]},   # TariffElement -> ReservationRestrictionType (Enum)
+            {'id_from': 8, 'ids_to': [7]},   # TariffRestrictions -> DayOfWeek (Enum)
+        ],
+        'arrowhead': 'vee',
+    },
+    {
+        'color': 'red',
+        'connections': [
+            {'id_from': 1, 'ids_to': [8]},   # Tariff -> TariffRestrictions
+        ],
+        'arrowhead': 'vee',
+    },
+]
+
+clusters = [
+    {
+        'name': 'TariffCluster',
+        'color': 'lightgrey',
+        'nodes': [1, 2, 3],  # Tariff, TariffElement, PriceComponent
+    },
+    {
+        'name': 'EnumCluster',
+        'color': 'lightyellow',
+        'nodes': [4, 5, 6, 7],  # TariffType, TariffDimensionType, ReservationRestrictionType, DayOfWeek
+    },
+    {
+        'name': 'RestrictionCluster',
+        'color': 'lightpink',
+        'nodes': [8],  # TariffRestrictions
+    },
+]
+
+[{'color': 'black', 'connections': [{'id_from': 1, 'ids_to': [2]}], 'arrowhead': 'normal'}, {'color': 'black', 'connections': [{'id_from': 1, 'ids_to': [3]}], 'arrowhead': 'normal'}, {'color': 'black', 'connections': [{'id_from': 1, 'ids_to': [4]}], 'arrowhead': 'normal'}, {'color': 'black', 'connections': [{'id_from': 4, 'ids_to': [5]}], 'arrowhead': 'normal'}, {'color': 'black', 'connections': [{'id_from': 5, 'ids_to': [6]}], 'arrowhead': 'normal'}, {'color': 'black', 'connections': [{'id_from': 4, 'ids_to': [7]}], 'arrowhead': 'normal'}]
+[{'name': 'TariffCluster', 'color': 'lightgrey', 'nodes': [1]}, {'name': 'PriceCluster', 'color': 'lightgrey', 'nodes': [3]}, {'name': 'TariffElementCluster', 'color': 'lightgrey', 'nodes': [4]}, {'name': 'PriceComponentCluster', 'color': 'lightgrey', 'nodes': [5]}, {'name': 'RestrictionsCluster', 'color': 'lightpink', 'nodes': [8]}]```
+
+#### File: `graph_creation/graph_labeled.py`
+```
+def spread_edges(list1):
+    spread = []
+    # Now handle both unlabeled and labeled targets
+    for a, b_s in list1:
+        for b in b_s:
+            if isinstance(b, tuple) and len(b) == 2:
+                # (target, label)
+                target, label = b
+                spread.append((a, target, label))
+            else:
+                # Just a target
+                spread.append((a, b, None))
+    return spread
+
+def transform_edges(edges):
+    return [
+        {
+            'color': edge_obj.get('color', 'black'),
+            'arrowhead': edge_obj.get('arrowhead', 'normal'),
+            'edges': spread_edges(edge_obj['connections']),
+        }
+        for edge_obj in edges
+    ]
+
+from graphviz import Digraph
+
+def create_graph(nodes, edges, clusters, filename):
+    dot = Digraph(comment='Knowledge Graph', format='png')
+
+    # Add nodes
+    for cluster in nodes:
+        for node_id, node_name in cluster['nodes']:
+            dot.node(str(node_id), node_name, shape=cluster['shape'], style='filled', fillcolor=cluster['color'])
+
+    # Transform edges now (no need to do it beforehand)
+    edges = transform_edges(edges)
+
+    # Add edges
+    for edge in edges:
+        color = edge.get('color', 'black')
+        arrowhead = edge.get('arrowhead', 'normal')
+        for connection in edge['edges']:
+            # connection is (source, target, label)
+            a, b, label = connection
+            if label:
+                dot.edge(str(a), str(b), color=color, arrowhead=arrowhead, label=label)
+            else:
+                dot.edge(str(a), str(b), color=color, arrowhead=arrowhead)
+
+    # Add clusters if any
+    for cluster in clusters:
+        with dot.subgraph(name='cluster_' + cluster['name']) as c:
+            c.attr(style='filled', color=cluster['color'])
+            for n in cluster['nodes']:
+                c.node(str(n))
+            c.attr(label=cluster['name'])
+
+    dot.render(filename, view=True, cleanup=True)
+```
+
+#### File: `graph_creation/test_edge_form.py`
+```
+import unittest
+from utility.graph_creation.generate_cat_edges import create_graph_from_classes
+from domains.pydantic.parkit_imports import classes_list
+
+class TestDataStructureFormat(unittest.TestCase):
+    
+    def setUp(self):
+        self.categories, self.edges = create_graph_from_classes(classes_list, output_filename='pydantic_graph_test_dot.png', layout_prog='dot')
+        print(f'{self.categories=}')
+
+    def test_categories_format(self):
+        self.assertIsInstance(self.categories, list)
+        for category in self.categories:
+            self.assertIsInstance(category, dict)
+            self.assertIn('name', category)
+            self.assertIn('color', category)
+            self.assertIn('shape', category)
+            self.assertIn('nodes', category)
+            self.assertIsInstance(category['nodes'], list)
+            for node in category['nodes']:
+                self.assertIsInstance(node, dict)
+                self.assertIn('id', node)
+                self.assertIn('name', node)
+                self.assertIsInstance(node['id'], int)
+                self.assertIsInstance(node['name'], str)
+            
+
+    def test_edges_format(self):
+        self.assertIsInstance(self.edges, list)
+        for edge in self.edges:
+            self.assertIsInstance(edge, dict)
+            self.assertIn('color', edge)
+            self.assertIn('connections', edge)
+            self.assertIn('arrowhead', edge)
+            self.assertIsInstance(edge['connections'], list)
+            for connection in edge['connections']:
+                self.assertIsInstance(connection, dict)
+                self.assertIn('id_from', connection)
+                self.assertIn('ids_to', connection)
+                self.assertIsInstance(connection['id_from'], int)
+                self.assertIsInstance(connection['ids_to'], list)
+                for id_to in connection['ids_to']:
+                    self.assertIsInstance(id_to, int)
+
+if __name__ == '__main__':
+    unittest.main()```

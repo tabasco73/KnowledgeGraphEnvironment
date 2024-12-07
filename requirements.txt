@@ -7,6 +7,6 @@ langchain_ollama
 tiktoken
 python-dotenv
 pydantic
-pygraphviz
 openai
+pathspec
 pathspec

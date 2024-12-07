@@ -1,4 +1,5 @@
 from utility.graph_creation.graph_modules import create_graph, transform_clusters, transform_edges, transform_nodes
+from utility.graph_creation.models import validate_graph
 
 arrow_tails = ['normal', 'odiamond', 'diamond', 'box']
 colors = [ 'black', 'red', 'blue', 'green', 'yellow', 'purple', 'lightblue']
@@ -180,6 +181,14 @@ def main_opt():
     edges = get_edges()
     cluster = get_clusters()
     filename = 'docs/opt_graph'
+    data = {
+        "nodes": nodes,
+        "edges": edges,
+        "clusters": [cluster]
+    }
+    
+    # Perform validation
+    validate_graph(data)
     create_graph(nodes, edges, cluster, filename)
 
 if __name__ =='__main__':
